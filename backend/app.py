@@ -7,6 +7,10 @@ from backend.routes import api
 def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
+    
+@app.route("/")
+def home():
+    return "Team Task Manager API is running 🚀"    
 
     db.init_app(app)
     jwt.init_app(app)
