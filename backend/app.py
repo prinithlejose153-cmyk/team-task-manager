@@ -18,12 +18,12 @@ def create_app():
     # Register routes
     app.register_blueprint(api)
 
-    # ✅ ROOT ROUTE (CORRECT PLACE)
+    # Root route
     @app.route("/")
     def home():
         return "Team Task Manager API is running 🚀"
 
-    # Create DB tables
+    # Create tables
     with app.app_context():
         db.create_all()
 
