@@ -38,7 +38,7 @@ async function login() {
                 data.access_token
             );
 
-            window.location.href = "/dashboard";
+            window.location.href = "/dashboard-page";
 
         } else {
 
