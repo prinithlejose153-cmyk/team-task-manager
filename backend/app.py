@@ -6,43 +6,34 @@ from backend.extensions import db, jwt, bcrypt
 from backend.routes import api
 
 
-def create_app():
+app = Flask(
+    __name__,
+    template_folder="templates",
+    static_folder="static"
+)
 
-    app = Flask(
-        __name__,
-        template_folder="templates",
-        static_folder="static"
-    )
+app.config.from_object(Config)
 
-    app.config.from_object(Config)
+db.init_app(app)
+jwt.init_app(app)
+bcrypt.init_app(app)
+CORS(app)
 
-    # Initialize extensions
-    db.init_app(app)
-    jwt.init_app(app)
-    bcrypt.init_app(app)
-    CORS(app)
+app.register_blueprint(api)
 
-    # Register API blueprint
-    app.register_blueprint(api)
-
-    # Create DB tables
-    with app.app_context():
-        db.create_all()
-
-    # ---------------- FRONTEND ROUTES ---------------- #
-
-    @app.route("/")
-    def home():
-        return render_template("index.html")
-
-    @app.route("/dashboard-page")
-    def dashboard_page():
-        return render_template("dashboard.html")
-
-    return app
+with app.app_context():
+    db.create_all()
 
 
-app = create_app()
+@app.route("/")
+def home():
+    return render_template("index.html")
+
+
+@app.route("/dashboard-page")
+def dashboard_page():
+    return render_template("dashboard.html")
+
 
 if __name__ == "__main__":
     app.run(debug=True)
