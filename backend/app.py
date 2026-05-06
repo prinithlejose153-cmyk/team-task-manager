@@ -22,10 +22,10 @@ def create_app():
     bcrypt.init_app(app)
     CORS(app)
 
-    # Register API routes
+    # Register API blueprint
     app.register_blueprint(api)
 
-    # Create database tables
+    # Create DB tables
     with app.app_context():
         db.create_all()
 
@@ -35,7 +35,7 @@ def create_app():
     def home():
         return render_template("index.html")
 
-    @app.route("/dashboard")
+    @app.route("/dashboard-page")
     def dashboard_page():
         return render_template("dashboard.html")
 
