@@ -1,33 +1,28 @@
-const API = "";
+const API_BASE = window.location.origin;
 
-
-// ---------------- LOGIN ----------------
+// ---------------- LOGIN ---------------- //
 
 async function login() {
 
-    const email =
-        document.getElementById("email").value;
-
-    const password =
-        document.getElementById("password").value;
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
 
     try {
 
-        const response = await fetch(
-            `${API}/auth/login`,
-            {
-                method: "POST",
+        const response = await fetch(`${API_BASE}/auth/login`, {
 
-                headers: {
-                    "Content-Type": "application/json"
-                },
+            method: "POST",
 
-                body: JSON.stringify({
-                    email,
-                    password
-                })
-            }
-        );
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                email,
+                password
+            })
+
+        });
 
         const data = await response.json();
 
@@ -38,11 +33,13 @@ async function login() {
                 data.access_token
             );
 
+            // IMPORTANT FIX
             window.location.href = "/dashboard-page";
 
         } else {
 
             alert(data.msg || "Login failed");
+
         }
 
     } catch (error) {
@@ -50,16 +47,17 @@ async function login() {
         console.error(error);
 
         alert("Server error");
+
     }
+
 }
 
 
-// ---------------- LOAD DASHBOARD ----------------
+// ---------------- LOAD DASHBOARD ---------------- //
 
 async function loadDashboard() {
 
-    const token =
-        localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     if (!token) {
         window.location.href = "/";
@@ -68,167 +66,163 @@ async function loadDashboard() {
 
     try {
 
-        const response = await fetch(
-            `${API}/api/dashboard`,
-            {
+        const response = await fetch(`${API_BASE}/dashboard`, {
 
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-
+            headers: {
+                Authorization: `Bearer ${token}`
             }
-        );
+
+        });
 
         const data = await response.json();
 
-        document.getElementById("projects").innerText =
-            data.projects ?? 0;
+        if (!response.ok) {
 
-        document.getElementById("tasks").innerText =
-            data.tasks ?? 0;
+            alert(data.msg || "Unauthorized");
 
-        document.getElementById("myTasks").innerText =
-            data.my_tasks ?? 0;
+            localStorage.removeItem("token");
 
-        document.getElementById("completed").innerText =
-            data.completed ?? 0;
-
-        // LOAD TASKS ALSO
-        loadTasks();
-
-    } catch (error) {
-
-        console.error(error);
-    }
-}
-
-
-// ---------------- CREATE TASK ----------------
-
-async function createTask() {
-
-    const token =
-        localStorage.getItem("token");
-
-    const title =
-        document.getElementById("taskTitle").value;
-
-    if (!title) {
-        alert("Enter task title");
-        return;
-    }
-
-    try {
-
-        const response = await fetch(
-            `${API}/tasks`,
-            {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`
-                },
-
-                body: JSON.stringify({
-                    title: title
-                })
-
-            }
-        );
-
-        const data = await response.json();
-
-        alert(data.msg);
-
-        document.getElementById("taskTitle").value = "";
-
-        // REFRESH
-        loadDashboard();
-        loadTasks();
-
-    } catch (error) {
-
-        console.error(error);
-    }
-}
-
-
-// ---------------- LOAD TASKS ----------------
-
-async function loadTasks() {
-
-    const token =
-        localStorage.getItem("token");
-
-    try {
-
-        const response = await fetch(
-            `${API}/tasks`,
-            {
-
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-
-            }
-        );
-
-        const tasks = await response.json();
-
-        const container =
-            document.getElementById("taskContainer");
-
-        container.innerHTML = "";
-
-        if (tasks.length === 0) {
-
-            container.innerHTML =
-                "<li>No tasks available</li>";
+            window.location.href = "/";
 
             return;
         }
 
+        document.getElementById("projects").innerText =
+            data.projects;
+
+        document.getElementById("tasks").innerText =
+            data.tasks;
+
+        document.getElementById("myTasks").innerText =
+            data.my_tasks;
+
+        document.getElementById("completed").innerText =
+            data.completed;
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+// ---------------- LOAD TASKS ---------------- //
+
+async function loadTasks() {
+
+    const token = localStorage.getItem("token");
+
+    try {
+
+        const response = await fetch(`${API_BASE}/tasks`, {
+
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+
+        });
+
+        const tasks = await response.json();
+
+        const taskList =
+            document.getElementById("taskList");
+
+        if (!taskList) return;
+
+        taskList.innerHTML = "";
+
         tasks.forEach(task => {
 
-            const li =
-                document.createElement("li");
+            const div = document.createElement("div");
 
-            li.className = "task-item";
+            div.className = "task-card";
 
-            li.innerHTML = `
-                <span>
-                    ${task.title}
-                    - ${task.status}
-                </span>
+            div.innerHTML = `
+                <h3>${task.title}</h3>
+                <p>Status: ${task.status}</p>
 
                 <button onclick="markDone(${task.id})">
                     Mark Done
                 </button>
             `;
 
-            container.appendChild(li);
+            taskList.appendChild(div);
+
         });
 
     } catch (error) {
 
         console.error(error);
+
     }
+
 }
 
 
-// ---------------- MARK TASK DONE ----------------
+// ---------------- CREATE TASK ---------------- //
+
+async function createTask() {
+
+    const title =
+        document.getElementById("taskTitle").value;
+
+    const token = localStorage.getItem("token");
+
+    try {
+
+        const response = await fetch(`${API_BASE}/tasks`, {
+
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`
+            },
+
+            body: JSON.stringify({
+                title: title,
+                project_id: 1,
+                assigned_to: 1
+            })
+
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+
+            alert("Task created successfully");
+
+            loadTasks();
+            loadDashboard();
+
+        } else {
+
+            alert(data.msg || "Task creation failed");
+
+        }
+
+    } catch (error) {
+
+        console.error(error);
+
+    }
+
+}
+
+
+// ---------------- MARK TASK DONE ---------------- //
 
 async function markDone(taskId) {
 
-    const token =
-        localStorage.getItem("token");
+    const token = localStorage.getItem("token");
 
     try {
 
         const response = await fetch(
-            `${API}/tasks/${taskId}`,
+            `${API_BASE}/tasks/${taskId}`,
             {
 
                 method: "PUT",
@@ -245,25 +239,40 @@ async function markDone(taskId) {
             }
         );
 
-        const data = await response.json();
+        if (response.ok) {
 
-        alert(data.msg);
+            loadTasks();
+            loadDashboard();
 
-        loadDashboard();
-        loadTasks();
+        }
 
     } catch (error) {
 
         console.error(error);
+
     }
+
 }
 
 
-// ---------------- LOGOUT ----------------
+// ---------------- LOGOUT ---------------- //
 
 function logout() {
 
     localStorage.removeItem("token");
 
     window.location.href = "/";
+
+}
+
+
+// ---------------- AUTO LOAD ---------------- //
+
+if (
+    window.location.pathname === "/dashboard-page"
+) {
+
+    loadDashboard();
+    loadTasks();
+
 }
