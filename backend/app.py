@@ -7,6 +7,7 @@ from backend.routes import api
 
 
 def create_app():
+
     app = Flask(
         __name__,
         template_folder="templates",
@@ -21,14 +22,14 @@ def create_app():
     bcrypt.init_app(app)
     CORS(app)
 
-    # Register API blueprint
+    # Register API routes
     app.register_blueprint(api)
 
     # Create database tables
     with app.app_context():
         db.create_all()
 
-    # ---------------- FRONTEND ROUTES ----------------
+    # ---------------- FRONTEND ROUTES ---------------- #
 
     @app.route("/")
     def home():

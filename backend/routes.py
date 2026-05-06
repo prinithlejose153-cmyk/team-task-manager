@@ -1,13 +1,12 @@
 from flask import Blueprint, request, jsonify
-from sqlalchemy.exc import IntegrityError
-
 from backend.extensions import db, bcrypt
 from backend.models import User, Project, Task
 
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
-    get_jwt_identity
+    get_jwt_identity,
+    get_jwt
 )
 
 api = Blueprint("api", __name__)
@@ -16,7 +15,17 @@ api = Blueprint("api", __name__)
 
 @api.route("/auth/register", methods=["POST"])
 def register():
+
     data = request.json
+
+    existing_user = User.query.filter_by(
+        email=data["email"]
+    ).first()
+
+    if existing_user:
+        return jsonify({
+            "msg": "Email already exists"
+        }), 400
 
     hashed = bcrypt.generate_password_hash(
         data["password"]
@@ -29,15 +38,8 @@ def register():
         role=data.get("role", "member")
     )
 
-    try:
-        db.session.add(user)
-        db.session.commit()
-
-    except IntegrityError:
-        db.session.rollback()
-        return jsonify({
-            "msg": "Email already exists"
-        }), 400
+    db.session.add(user)
+    db.session.commit()
 
     return jsonify({
         "msg": "User created"
@@ -46,6 +48,7 @@ def register():
 
 @api.route("/auth/login", methods=["POST"])
 def login():
+
     data = request.json
 
     user = User.query.filter_by(
@@ -58,15 +61,16 @@ def login():
     ):
 
         token = create_access_token(
-            identity={
-                "id": user.id,
-                "role": user.role,
-                "email": user.email
+            identity=str(user.id),
+            additional_claims={
+                "role": user.role
             }
         )
 
         return jsonify({
-            "access_token": token
+            "access_token": token,
+            "role": user.role,
+            "user_id": user.id
         })
 
     return jsonify({
@@ -80,19 +84,21 @@ def login():
 @jwt_required()
 def create_project():
 
-    user = get_jwt_identity()
+    claims = get_jwt()
 
-    if user["role"] != "admin":
+    if claims["role"] != "admin":
         return jsonify({
             "msg": "Admins only"
         }), 403
+
+    user_id = int(get_jwt_identity())
 
     data = request.json
 
     project = Project(
         name=data["name"],
         description=data.get("description"),
-        owner_id=user["id"]
+        owner_id=user_id
     )
 
     db.session.add(project)
@@ -112,7 +118,8 @@ def get_projects():
     return jsonify([
         {
             "id": p.id,
-            "name": p.name
+            "name": p.name,
+            "description": p.description
         }
         for p in projects
     ])
@@ -124,24 +131,20 @@ def get_projects():
 @jwt_required()
 def create_task():
 
-    user = get_jwt_identity()
+    claims = get_jwt()
 
-    if user["role"] != "admin":
+    if claims["role"] != "admin":
         return jsonify({
             "msg": "Admins only"
         }), 403
 
     data = request.json
 
-    # SAFE DEFAULTS
-    project_id = data.get("project_id")
-    assigned_to = data.get("assigned_to", user["id"])
-
     task = Task(
         title=data["title"],
-        project_id=project_id,
-        assigned_to=assigned_to,
-        status="todo"
+        project_id=data.get("project_id", 1),
+        assigned_to=data.get("assigned_to", 1),
+        status="pending"
     )
 
     db.session.add(task)
@@ -156,10 +159,10 @@ def create_task():
 @jwt_required()
 def get_tasks():
 
-    user = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     tasks = Task.query.filter_by(
-        assigned_to=user["id"]
+        assigned_to=user_id
     ).all()
 
     return jsonify([
@@ -176,11 +179,11 @@ def get_tasks():
 @jwt_required()
 def update_task(task_id):
 
-    user = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     task = Task.query.get_or_404(task_id)
 
-    if task.assigned_to != user["id"]:
+    if task.assigned_to != user_id:
         return jsonify({
             "msg": "Not allowed"
         }), 403
@@ -195,28 +198,28 @@ def update_task(task_id):
     db.session.commit()
 
     return jsonify({
-        "msg": "Updated"
+        "msg": "Task updated"
     })
 
 
-# ---------------- DASHBOARD API ---------------- #
+# ---------------- DASHBOARD ---------------- #
 
-@api.route("/api/dashboard", methods=["GET"])
+@api.route("/dashboard", methods=["GET"])
 @jwt_required()
 def dashboard():
 
-    user = get_jwt_identity()
+    user_id = int(get_jwt_identity())
 
     total_projects = Project.query.count()
 
     total_tasks = Task.query.count()
 
     my_tasks = Task.query.filter_by(
-        assigned_to=user["id"]
+        assigned_to=user_id
     ).count()
 
     done_tasks = Task.query.filter_by(
-        assigned_to=user["id"],
+        assigned_to=user_id,
         status="done"
     ).count()
 

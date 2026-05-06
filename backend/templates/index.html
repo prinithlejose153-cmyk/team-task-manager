@@ -1,24 +1,60 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
-  <title>Login</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Team Task Manager</title>
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
 </head>
+
 <body>
 
-<div class="container">
-  <h2>🚀 Team Task Manager</h2>
-  <p class="subtitle">Manage tasks like a pro</p>
+    <div class="container">
 
-  <div class="card">
-    <input id="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
+        <div class="login-card">
 
-    <button onclick="login()">Login</button>
-  </div>
-</div>
+            <h1>🚀 Team Task Manager</h1>
 
-<script src="{{ url_for('static', filename='app.js') }}"></script>
+            <p class="subtitle">
+                Manage tasks like a pro
+            </p>
+
+            <input
+                type="email"
+                id="email"
+                placeholder="Email"
+            >
+
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+            >
+
+            <button onclick="login()">
+                Login
+            </button>
+
+        </div>
+
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='app.js') }}">
+    </script>
+
 </body>
+
 </html>
