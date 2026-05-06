@@ -1,12 +1,18 @@
-from flask import Flask
+from flask import Flask, render_template
+from flask_cors import CORS
+
 from backend.config import Config
 from backend.extensions import db, jwt, bcrypt
-from flask_cors import CORS
 from backend.routes import api
 
 
 def create_app():
-    app = Flask(__name__)
+    app = Flask(
+        __name__,
+        template_folder="templates",
+        static_folder="static"
+    )
+
     app.config.from_object(Config)
 
     # Initialize extensions
@@ -15,23 +21,27 @@ def create_app():
     bcrypt.init_app(app)
     CORS(app)
 
-    # Register routes
+    # Register API blueprint
     app.register_blueprint(api)
 
-    # Root route
-    @app.route("/")
-    def home():
-        return "Team Task Manager API is running 🚀"
-
-    # Create tables
+    # Create database tables
     with app.app_context():
         db.create_all()
+
+    # ---------------- FRONTEND ROUTES ----------------
+
+    @app.route("/")
+    def home():
+        return render_template("index.html")
+
+    @app.route("/dashboard")
+    def dashboard_page():
+        return render_template("dashboard.html")
 
     return app
 
 
 app = create_app()
-
 
 if __name__ == "__main__":
     app.run(debug=True)

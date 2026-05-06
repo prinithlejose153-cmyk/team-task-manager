@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Dashboard</title>
+
+    <link rel="stylesheet"
+        href="{{ url_for('static', filename='styles.css') }}">
+</head>
+
+<body onload="loadDashboard()">
+
+    <div class="container">
+
+        <h1>📊 Dashboard</h1>
+
+        <p class="subtitle">
+            Welcome, User
+        </p>
+
+        <button class="logout-btn" onclick="logout()">
+            Logout
+        </button>
+
+        <div class="stats-grid">
+
+            <div class="card">
+                <h2>Projects</h2>
+                <p id="projects">0</p>
+            </div>
+
+            <div class="card">
+                <h2>Total Tasks</h2>
+                <p id="tasks">0</p>
+            </div>
+
+            <div class="card">
+                <h2>My Tasks</h2>
+                <p id="myTasks">0</p>
+            </div>
+
+            <div class="card">
+                <h2>Completed</h2>
+                <p id="completed">0</p>
+            </div>
+
+        </div>
+
+        <div class="task-section">
+
+            <h2>➕ Create Task</h2>
+
+            <input
+                type="text"
+                id="taskTitle"
+                placeholder="Enter task title"
+            >
+
+            <button onclick="createTask()">
+                Create Task
+            </button>
+
+        </div>
+
+        <div class="task-list">
+
+            <h2>📋 My Tasks</h2>
+
+            <ul id="taskContainer"></ul>
+
+        </div>
+
+    </div>
+
+    <script
+        src="{{ url_for('static', filename='app.js') }}">
+    </script>
+
+</body>
+
+</html>
